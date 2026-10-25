@@ -1,0 +1,31 @@
+{
+  "name": "@soryos/github",
+  "version": "1.0.0",
+  "description": "SoryOS-Code GitHub Integration - Repository management, commits, pull requests, and webhooks",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "github",
+    "git",
+    "repository",
+    "commit",
+    "pull-request",
+    "webhook",
+    "soryos"
+  ],
+  "author": "SoryOS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@soryos/schema": "*",
+    "@soryos/core": "*",
+    "@soryos/execution": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,418 @@
+name: Preview Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      description:
+        description: 'Description of the preview'
+        required: false
+        default: 'Preview build for testing'
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'docs/**'
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Build and Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ============================================================================
+      # STEP 1: Detect package manager BEFORE setting up Node.js
+      # ============================================================================
+      - name: Detect package manager and requirements
+        id: detect-pm
+        run: |
+          echo "=== Package Manager Detection ==="
+          
+          # Check for lockfiles
+          if [ -f "bun.lock" ]; then
+            echo "Detected: bun (bun.lock found)"
+            echo "manager=bun" >> $GITHUB_OUTPUT
+            echo "install_cmd=bun install --frozen-lockfile" >> $GITHUB_OUTPUT
+            echo "run_cmd=bunx" >> $GITHUB_OUTPUT
+            echo "needs_bun=true" >> $GITHUB_OUTPUT
+            echo "cache_key=bun-${{ hashFiles('bun.lock') }}" >> $GITHUB_OUTPUT
+          elif [ -f "pnpm-lock.yaml" ]; then
+            echo "Detected: pnpm (pnpm-lock.yaml found)"
+            echo "manager=pnpm" >> $GITHUB_OUTPUT
+            echo "install_cmd=pnpm install --frozen-lockfile" >> $GITHUB_OUTPUT
+            echo "run_cmd=pnpm exec" >> $GITHUB_OUTPUT
+            echo "needs_bun=false" >> $GITHUB_OUTPUT
+            echo "cache_key=pnpm-${{ hashFiles('pnpm-lock.yaml') }}" >> $GITHUB_OUTPUT
+          elif [ -f "yarn.lock" ]; then
+            echo "Detected: yarn (yarn.lock found)"
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "install_cmd=yarn install --frozen-lockfile" >> $GITHUB_OUTPUT
+            echo "run_cmd=yarn" >> $GITHUB_OUTPUT
+            echo "needs_bun=false" >> $GITHUB_OUTPUT
+            echo "cache_key=yarn-${{ hashFiles('yarn.lock') }}" >> $GITHUB_OUTPUT
+          else
+            echo "Detected: npm (default)"
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "install_cmd=npm ci" >> $GITHUB_OUTPUT
+            echo "run_cmd=npx" >> $GITHUB_OUTPUT
+            echo "needs_bun=false" >> $GITHUB_OUTPUT
+            echo "cache_key=npm-${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Manager: ${{ steps.detect-pm.outputs.manager }}"
+          echo "Install command: ${{ steps.detect-pm.outputs.install_cmd }}"
+
+      # ============================================================================
+      # STEP 2: Setup Bun (if needed)
+      # ============================================================================
+      - name: Setup Bun
+        if: steps.detect-pm.outputs.needs_bun == 'true'
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      # ============================================================================
+      # STEP 3: Setup Node.js (if not using Bun)
+      # ============================================================================
+      - name: Setup Node.js
+        if: steps.detect-pm.outputs.needs_bun != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: ${{ steps.detect-pm.outputs.manager }}
+          cache-dependency-path: |
+            ${{ steps.detect-pm.outputs.manager == 'bun' && 'bun.lock' || '' }}
+            ${{ steps.detect-pm.outputs.manager == 'pnpm' && 'pnpm-lock.yaml' || '' }}
+            ${{ steps.detect-pm.outputs.manager == 'yarn' && 'yarn.lock' || '' }}
+            ${{ steps.detect-pm.outputs.manager == 'npm' && 'package-lock.json' || '' }}
+
+      # ============================================================================
+      # STEP 4: Install dependencies
+      # ============================================================================
+      - name: Install dependencies
+        run: ${{ steps.detect-pm.outputs.install_cmd }}
+        working-directory: .
+        env:
+          NODE_ENV: development
+
+      # ============================================================================
+      # STEP 5: Detect application configuration
+      # ============================================================================
+      - name: Detect application configuration
+        id: detect-config
+        run: |
+          echo "=== Application Configuration Detection ==="
+          
+          # Read web app package.json
+          if [ -f "apps/web/package.json" ]; then
+            echo "Found apps/web/package.json"
+            
+            # Extract scripts
+            DEV_SCRIPT=$(jq -r '.scripts.dev // "next dev"' apps/web/package.json)
+            BUILD_SCRIPT=$(jq -r '.scripts.build // "next build"' apps/web/package.json)
+            START_SCRIPT=$(jq -r '.scripts.start // "next start"' apps/web/package.json)
+            
+            # Extract port from dev script
+            if echo "$DEV_SCRIPT" | grep -qP '(-p|--port)\s*\K\d+'; then
+              PORT=$(echo "$DEV_SCRIPT" | grep -oP '(-p|--port)\s*\K\d+' | head -1)
+            else
+              PORT=3000
+            fi
+            
+            echo "dev_script=$DEV_SCRIPT" >> $GITHUB_OUTPUT
+            echo "build_script=$BUILD_SCRIPT" >> $GITHUB_OUTPUT
+            echo "start_script=$START_SCRIPT" >> $GITHUB_OUTPUT
+            echo "port=$PORT" >> $GITHUB_OUTPUT
+            
+            echo "Detected configuration:"
+            echo "  Dev script: $DEV_SCRIPT"
+            echo "  Build script: $BUILD_SCRIPT"
+            echo "  Port: $PORT"
+          else
+            echo "::error::apps/web/package.json not found"
+            exit 1
+          fi
+
+      # ============================================================================
+      # STEP 6: Build application
+      # ============================================================================
+      - name: Build application
+        run: |
+          echo "Building application..."
+          cd apps/web
+          ${{ steps.detect-pm.outputs.run_cmd }} ${{ steps.detect-config.outputs.build_script }}
+        env:
+          NODE_ENV: production
+
+      # ============================================================================
+      # STEP 7: Install netcat for port checking
+      # ============================================================================
+      - name: Install netcat
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-openbsd
+
+      # ============================================================================
+      # STEP 8: Start development server in background
+      # ============================================================================
+      - name: Start development server
+        id: start-server
+        run: |
+          echo "Starting development server..."
+          cd apps/web
+          
+          # Set PORT environment variable if not already set
+          export PORT=${{ steps.detect-config.outputs.port }}
+          
+          # Start the server in background
+          nohup ${{ steps.detect-pm.outputs.run_cmd }} ${{ steps.detect-config.outputs.dev_script }} > /tmp/server.log 2>&1 &
+          SERVER_PID=$!
+          echo "server_pid=$SERVER_PID" >> $GITHUB_OUTPUT
+          echo "Server PID: $SERVER_PID"
+          echo "Server log: /tmp/server.log"
+          
+          # Wait a bit for server to start
+          sleep 5
+          
+          # Check if process is still running
+          if ! kill -0 $SERVER_PID 2>/dev/null; then
+            echo "::error::Server process failed to start"
+            echo "Server log contents:"
+            cat /tmp/server.log
+            exit 1
+          fi
+          
+          echo "Server process started successfully"
+
+      # ============================================================================
+      # STEP 9: Wait for server to be ready
+      # ============================================================================
+      - name: Wait for server to be ready
+        id: wait-server
+        run: |
+          PORT=${{ steps.detect-config.outputs.port }}
+          echo "Waiting for server on port $PORT..."
+          
+          for i in {1..30}; do
+            if nc -z 127.0.0.1 $PORT; then
+              echo "✅ Server is listening on port $PORT"
+              
+              # Test HTTP response
+              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT 2>/dev/null || echo "000")
+              echo "HTTP Status: $HTTP_STATUS"
+              
+              if [[ "$HTTP_STATUS" =~ ^(200|301|302|307|308)$ ]]; then
+                echo "✅ Server is responding with HTTP $HTTP_STATUS"
+                echo "server_ready=true" >> $GITHUB_OUTPUT
+                break
+              else
+                echo "⚠️  Server listening but returned HTTP $HTTP_STATUS, retrying..."
+              fi
+            fi
+            
+            if [ $i -eq 30 ]; then
+              echo "::error::Server did not become ready within 60 seconds"
+              echo "Checking server logs:"
+              tail -100 /tmp/server.log
+              exit 1
+            fi
+            
+            sleep 2
+            echo "Attempt $i/30 - Waiting..."
+          done
+
+      # ============================================================================
+      # STEP 10: Create tunnel for public access
+      # ============================================================================
+      - name: Install localtunnel
+        if: steps.wait-server.outputs.server_ready == 'true'
+        run: |
+          echo "Installing localtunnel..."
+          npm install -g localtunnel
+
+      - name: Create tunnel
+        id: create-tunnel
+        if: steps.wait-server.outputs.server_ready == 'true'
+        run: |
+          echo "Creating tunnel..."
+          PORT=${{ steps.detect-config.outputs.port }}
+          
+          # Start localtunnel in background
+          nohup lt --port $PORT --subdomain soryos-preview-${{ github.run_id }} > /tmp/tunnel.log 2>&1 &
+          TUNNEL_PID=$!
+          echo "tunnel_pid=$TUNNEL_PID" >> $GITHUB_OUTPUT
+          
+          # Wait for tunnel to be ready
+          sleep 8
+          
+          # Try to get tunnel URL from localtunnel
+          # localtunnel outputs the URL to stdout, so we need to parse the log
+          if [ -f /tmp/tunnel.log ]; then
+            TUNNEL_URL=$(grep -oP 'https://[^\s]+\.loca\.lt' /tmp/tunnel.log | head -1)
+          fi
+          
+          if [ -z "$TUNNEL_URL" ]; then
+            # Fallback: construct URL manually
+            TUNNEL_URL="https://soryos-preview-${{ github.run_id }}.loca.lt"
+          fi
+          
+          echo "tunnel_url=$TUNNEL_URL" >> $GITHUB_OUTPUT
+          echo "Tunnel URL: $TUNNEL_URL"
+
+      # ============================================================================
+      # STEP 11: Test tunnel URL
+      # ============================================================================
+      - name: Test tunnel URL
+        id: test-tunnel
+        if: steps.create-tunnel.outputs.tunnel_url != ''
+        run: |
+          TUNNEL_URL=${{ steps.create-tunnel.outputs.tunnel_url }}
+          echo "Testing tunnel URL: $TUNNEL_URL"
+          
+          # Wait a bit more for tunnel to be fully ready
+          sleep 5
+          
+          # Test with curl (allow up to 10 seconds)
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$TUNNEL_URL" 2>/dev/null || echo "000")
+          echo "Tunnel HTTP Status: $HTTP_STATUS"
+          
+          if [[ "$HTTP_STATUS" =~ ^(200|301|302|307|308)$ ]]; then
+            echo "✅ Tunnel is working!"
+            echo "tunnel_works=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  Tunnel returned HTTP $HTTP_STATUS (may still be initializing)"
+            echo "tunnel_works=checking" >> $GITHUB_OUTPUT
+          fi
+
+      # ============================================================================
+      # STEP 12: Display preview information
+      # ============================================================================
+      - name: Display preview information
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "        PREVIEW DEPLOYMENT SUMMARY"
+          echo "=========================================="
+          echo ""
+          
+          if [ "${{ steps.wait-server.outputs.server_ready }}" = "true" ]; then
+            echo "✅ Server Status: RUNNING"
+            echo "   Local Port: ${{ steps.detect-config.outputs.port }}"
+            echo "   Process ID: ${{ steps.start-server.outputs.server_pid }}"
+          else
+            echo "❌ Server Status: FAILED TO START"
+          fi
+          
+          echo ""
+          
+          if [ -n "${{ steps.create-tunnel.outputs.tunnel_url }}" ]; then
+            echo "🌐 Tunnel URL: ${{ steps.create-tunnel.outputs.tunnel_url }}"
+            
+            if [ "${{ steps.test-tunnel.outputs.tunnel_works }}" = "true" ]; then
+              echo "   Status: ✅ RESPONDING"
+            else
+              echo "   Status: ⚠️  CHECKING (tunnel may need more time)"
+            fi
+          else
+            echo "🌐 Tunnel URL: NOT AVAILABLE"
+          fi
+          
+          echo ""
+          echo "=========================================="
+          echo ""
+          
+          # Show server logs for debugging
+          if [ -f /tmp/server.log ]; then
+            echo "📝 Server Log (last 50 lines):"
+            tail -50 /tmp/server.log
+          fi
+          
+          if [ -f /tmp/tunnel.log ]; then
+            echo ""
+            echo "📝 Tunnel Log (last 20 lines):"
+            tail -20 /tmp/tunnel.log
+          fi
+
+      # ============================================================================
+      # STEP 13: Keep preview alive for testing
+      # ============================================================================
+      - name: Keep preview alive
+        if: steps.wait-server.outputs.server_ready == 'true'
+        run: |
+          echo "Keeping preview alive for testing..."
+          echo "Preview URL: ${{ steps.create-tunnel.outputs.tunnel_url }}"
+          echo "This job will remain active for 20 minutes"
+          
+          # Keep the job alive, checking server health periodically
+          for i in {1..600}; do
+            # Check if server is still running
+            if ! kill -0 ${{ steps.start-server.outputs.server_pid }} 2>/dev/null; then
+              echo "::error::Server process has stopped"
+              exit 1
+            fi
+            
+            # Check if tunnel is still running
+            if [ -n "${{ steps.create-tunnel.outputs.tunnel_pid }}" ]; then
+              if ! kill -0 ${{ steps.create-tunnel.outputs.tunnel_pid }} 2>/dev/null; then
+                echo "::warning::Tunnel process has stopped, but server is still running"
+              fi
+            fi
+            
+            sleep 2
+          done
+
+      # ============================================================================
+      # STEP 14: Cleanup on failure
+      # ============================================================================
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          echo "Cleaning up due to failure..."
+          
+          # Kill server
+          if [ -n "${{ steps.start-server.outputs.server_pid }}" ]; then
+            kill -TERM ${{ steps.start-server.outputs.server_pid }} 2>/dev/null || true
+            sleep 2
+            kill -KILL ${{ steps.start-server.outputs.server_pid }} 2>/dev/null || true
+          fi
+          
+          # Kill tunnel
+          if [ -n "${{ steps.create-tunnel.outputs.tunnel_pid }}" ]; then
+            kill -TERM ${{ steps.create-tunnel.outputs.tunnel_pid }} 2>/dev/null || true
+            kill -KILL ${{ steps.create-tunnel.outputs.tunnel_pid }} 2>/dev/null || true
+          fi
+          
+          echo "Cleanup completed"
+
+      # ============================================================================
+      # STEP 15: Final cleanup (always runs)
+      # ============================================================================
+      - name: Final cleanup
+        if: always()
+        run: |
+          echo "Performing final cleanup..."
+          
+          # Kill server process
+          if [ -n "${{ steps.start-server.outputs.server_pid }}" ]; then
+            kill -TERM ${{ steps.start-server.outputs.server_pid }} 2>/dev/null || true
+            sleep 1
+            kill -KILL ${{ steps.start-server.outputs.server_pid }} 2>/dev/null || true
+          fi
+          
+          # Kill tunnel process
+          if [ -n "${{ steps.create-tunnel.outputs.tunnel_pid }}" ]; then
+            kill -TERM ${{ steps.create-tunnel.outputs.tunnel_pid }} 2>/dev/null || true
+            kill -KILL ${{ steps.create-tunnel.outputs.tunnel_pid }} 2>/dev/null || true
+          fi
+          
+          echo "✅ All processes terminated"

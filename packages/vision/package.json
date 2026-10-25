@@ -1,0 +1,37 @@
+{
+  "name": "@soryos/vision",
+  "version": "1.0.0",
+  "description": "SoryOS-Code Vision AI Package - Image analysis with AI providers (Gemini, GPT-4, Mistral, Claude)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "vision",
+    "ai",
+    "image",
+    "analysis",
+    "ocr",
+    "description",
+    "objects",
+    "gemini",
+    "gpt-4",
+    "mistral",
+    "claude",
+    "soryos"
+  ],
+  "author": "SoryOS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@soryos/schema": "*",
+    "@soryos/core": "*",
+    "@soryos/images": "*",
+    "@soryos/provider": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

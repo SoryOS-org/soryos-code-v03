@@ -1,0 +1,200 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@soryos/core": [
+        "../../packages/core/src"
+      ],
+      "@soryos/core/*": [
+        "../../packages/core/src/*"
+      ],
+      "@soryos/schema": [
+        "../../packages/schema/src"
+      ],
+      "@soryos/schema/*": [
+        "../../packages/schema/src/*"
+      ],
+      "@soryos/bus": [
+        "../../packages/bus/src"
+      ],
+      "@soryos/bus/*": [
+        "../../packages/bus/src/*"
+      ],
+      "@soryos/permissions": [
+        "../../packages/permissions/src"
+      ],
+      "@soryos/permissions/*": [
+        "../../packages/permissions/src/*"
+      ],
+      "@soryos/execution": [
+        "../../packages/execution/src"
+      ],
+      "@soryos/execution/*": [
+        "../../packages/execution/src/*"
+      ],
+      "@soryos/tool": [
+        "../../packages/tool/src"
+      ],
+      "@soryos/tool/*": [
+        "../../packages/tool/src/*"
+      ],
+      "@soryos/agent": [
+        "../../packages/agent/src"
+      ],
+      "@soryos/agent/*": [
+        "../../packages/agent/src/*"
+      ],
+      "@soryos/cli": [
+        "../../packages/cli/src"
+      ],
+      "@soryos/cli/*": [
+        "../../packages/cli/src/*"
+      ],
+      "@soryos/dev-runner": [
+        "../../packages/dev-runner/src"
+      ],
+      "@soryos/dev-runner/*": [
+        "../../packages/dev-runner/src/*"
+      ],
+      "@soryos/workspace": [
+        "../../packages/workspace/src"
+      ],
+      "@soryos/workspace/*": [
+        "../../packages/workspace/src/*"
+      ],
+      "@soryos/session": [
+        "../../packages/session/src"
+      ],
+      "@soryos/session/*": [
+        "../../packages/session/src/*"
+      ],
+      "@soryos/provider": [
+        "../../packages/provider/src"
+      ],
+      "@soryos/provider/*": [
+        "../../packages/provider/src/*"
+      ],
+      "@soryos/filesystem": [
+        "../../packages/filesystem/src"
+      ],
+      "@soryos/filesystem/*": [
+        "../../packages/filesystem/src/*"
+      ],
+      "@soryos/git": [
+        "../../packages/git/src"
+      ],
+      "@soryos/git/*": [
+        "../../packages/git/src/*"
+      ],
+      "@soryos/pty": [
+        "../../packages/pty/src"
+      ],
+      "@soryos/pty/*": [
+        "../../packages/pty/src/*"
+      ],
+      "@soryos/config": [
+        "../../packages/config/src"
+      ],
+      "@soryos/config/*": [
+        "../../packages/config/src/*"
+      ],
+      "@soryos/auth": [
+        "../../packages/auth/src"
+      ],
+      "@soryos/auth/*": [
+        "../../packages/auth/src/*"
+      ],
+      "@soryos/credentials": [
+        "../../packages/credentials/src"
+      ],
+      "@soryos/credentials/*": [
+        "../../packages/credentials/src/*"
+      ],
+      "@soryos/sandbox": [
+        "../../packages/sandbox/src"
+      ],
+      "@soryos/sandbox/*": [
+        "../../packages/sandbox/src/*"
+      ],
+      "@soryos/terminal": [
+        "../../packages/terminal/src"
+      ],
+      "@soryos/terminal/*": [
+        "../../packages/terminal/src/*"
+      ],
+      "@soryos/github": [
+        "../../packages/github/src"
+      ],
+      "@soryos/github/*": [
+        "../../packages/github/src/*"
+      ],
+      "@soryos/images": [
+        "../../packages/images/src"
+      ],
+      "@soryos/images/*": [
+        "../../packages/images/src/*"
+      ],
+      "@soryos/voice": [
+        "../../packages/voice/src"
+      ],
+      "@soryos/voice/*": [
+        "../../packages/voice/src/*"
+      ],
+      "@soryos/vision": [
+        "../../packages/vision/src"
+      ],
+      "@soryos/vision/*": [
+        "../../packages/vision/src/*"
+      ],
+      "@soryos/plugin": [
+        "../../packages/plugin/src"
+      ],
+      "@soryos/plugin/*": [
+        "../../packages/plugin/src/*"
+      ],
+      "@soryos/theme": [
+        "../../packages/theme/src"
+      ],
+      "@soryos/theme/*": [
+        "../../packages/theme/src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "../../packages",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}

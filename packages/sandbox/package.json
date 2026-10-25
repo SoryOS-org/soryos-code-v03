@@ -1,0 +1,18 @@
+{
+  "name": "@soryos/sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@soryos/core": "*",
+    "@soryos/schema": "*",
+    "@soryos/execution": "*",
+    "@soryos/bus": "*",
+    "@soryos/session": "*",
+    "@soryos/filesystem": "*",
+    "@soryos/github": "*",
+    "@soryos/credentials": "*",
+    "@e2b/code-interpreter": "^1.0.0"
+  }
+}

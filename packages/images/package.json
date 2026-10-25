@@ -1,0 +1,30 @@
+{
+  "name": "@soryos/images",
+  "version": "1.0.0",
+  "description": "SoryOS-Code Image Input Package - Image upload, processing, and analysis for agent interactions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "image",
+    "upload",
+    "processing",
+    "analysis",
+    "vision",
+    "ocr",
+    "soryos"
+  ],
+  "author": "SoryOS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@soryos/schema": "*",
+    "@soryos/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@soryos/voice",
+  "version": "1.0.0",
+  "description": "SoryOS-Code Voice Input Package - Audio recording and transcription for agent interactions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "voice",
+    "audio",
+    "speech",
+    "recognition",
+    "transcription",
+    "soryos"
+  ],
+  "author": "SoryOS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@soryos/schema": "*",
+    "@soryos/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

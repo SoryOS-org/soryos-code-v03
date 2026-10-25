@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "outDir": "dist",
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@soryos/schema": ["../schema/src/index.ts"],
+      "@soryos/bus": ["../bus/src/index.ts"],
+      "@soryos/permissions": ["../permissions/src/index.ts"],
+      "@soryos/tool": ["../tool/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "__tests__/**/*.ts"],
+  "exclude": ["node_modules"]
+}

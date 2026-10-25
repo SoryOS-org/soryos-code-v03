@@ -1,0 +1,30 @@
+{
+  "name": "@soryos/tool",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@google/genai": "^2.26.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@soryos/bus": "*",
+    "@soryos/core": "*",
+    "@soryos/execution": "*",
+    "@soryos/images": "*",
+    "@soryos/permissions": "*",
+    "@soryos/provider": "*",
+    "@soryos/schema": "*",
+    "@soryos/session": "*",
+    "@soryos/voice": "*",
+    "@soryos/vision": "*",
+    "diff": "^9.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "scripts": {
+    "test:engine": "vitest run"
+  }
+}

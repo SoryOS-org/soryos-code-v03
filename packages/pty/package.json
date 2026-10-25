@@ -1,0 +1,13 @@
+{
+  "name": "@soryos/pty",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@soryos/bus": "*",
+    "@soryos/core": "*",
+    "@soryos/execution": "*",
+    "@soryos/schema": "*"
+  }
+}

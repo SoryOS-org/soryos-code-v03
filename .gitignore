@@ -1,0 +1,39 @@
+.conda
+.vscode
+node_modules
+.pnpm-store
+.turbo
+*.db
+data/
+
+# Python
+apps/api/venv/
+apps/api/__pycache__/
+apps/api/**/__pycache__/
+*.pyc
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+apps/web/node_modules/
+
+# Single monorepo env (secrets)
+.env
+.env.local
+.env.*.local
+
+# SoryOS local state (CLI sessions, plugin storage)
+.soryos/
+
+# Debug
+*.log
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+dist
+
+# Reference material (external repos, ~2Go) — jamais committé
+reference-pour-ameliorer-notre-projet/
+
+.soryos-worktrees/

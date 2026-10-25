@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "Session": {
+      "title": "Session",
+      "description": "An AI agent session containing conversation history and state.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "environment": { "type": "string", "enum": ["local", "sandbox"] },
+        "providerId": { "type": "string" },
+        "agentRunning": { "type": "boolean" }
+      },
+      "required": ["title", "status", "userId", "environment"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A message in a session conversation.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant", "system"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "metadata": { "type": "object" }
+      },
+      "required": ["sessionId", "role", "content"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/sessions/{sessionId}": {
+      "schema": "#/entities/Session",
+      "description": "Collection of agent sessions."
+    },
+    "/sessions/{sessionId}/messages/{messageId}": {
+      "schema": "#/entities/Message",
+      "description": "Messages within a session."
+    }
+  }
+}

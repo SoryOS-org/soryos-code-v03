@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "SoryOS-Code",
+  "short_name": "SoryOS-Code",
+  "description": "AI agent workbench for code generation and execution with multi-provider sandbox architecture.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbf9f5",
+  "theme_color": "#fbf9f5",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

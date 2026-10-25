@@ -1,0 +1,29 @@
+{
+  "name": "@soryos/cli",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "bin": {
+    "soryos-code": "./src/index.ts"
+  },
+  "dependencies": {
+    "@soryos/agent": "*",
+    "@soryos/bus": "*",
+    "@soryos/core": "*",
+    "@soryos/credentials": "*",
+    "@soryos/execution": "*",
+    "@soryos/permissions": "*",
+    "@soryos/provider": "*",
+    "@soryos/schema": "*",
+    "@soryos/session": "*",
+    "@soryos/tool": "*",
+    "@soryos/workspace": "*"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11"
+  },
+  "scripts": {
+    "test:engine": "vitest run"
+  }
+}

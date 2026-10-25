@@ -1,0 +1,7 @@
+{
+  "name": "SoryOS-Code",
+  "description": "AI agent workbench for code generation and execution with multi-provider sandbox architecture.",
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

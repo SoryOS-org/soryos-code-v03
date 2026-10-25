@@ -1,0 +1,29 @@
+# URL publique SoryOS-Code (accès externe navigateur)
+
+## 🌍 Ouvre cette URL dans ton navigateur :
+
+https://governments-acquired-plastic-shipped.trycloudflare.com
+
+---
+
+## Détails
+- Type     : Cloudflare Quick Tunnel (cloudflared) — gratuit, sans compte
+- Cible    : http://localhost:3000 (serveur Next.js dev, bind 0.0.0.0:3000)
+- Processus : cloudflared lancé le 14/10/2026 (binaire /tmp/opencode/cloudflared)
+- Log      : /tmp/opencode/cloudflared.log
+- Testé    : HTTP 200 ✅ (14/10/2026)
+
+## IP publique de la VM (pour info)
+- 35.240.73.95 (NAT sortante Google Cloud — le port 3000 n'y est PAS ouvert
+  en entrée, d'où l'utilité du tunnel)
+
+## Si l'URL ne marche plus (tunnel redémarré = nouvelle URL)
+Relance le tunnel depuis la racine du projet :
+  curl -sL -o /tmp/opencode/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+  chmod +x /tmp/opencode/cloudflared
+  nohup /tmp/opencode/cloudflared tunnel --url http://localhost:3000 > /tmp/opencode/tunnel.log 2>&1 &
+Puis récupère la nouvelle URL :
+  grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" /tmp/opencode/tunnel.log | head -1
+
+## Si le serveur dev (port 3000) ne tourne plus
+  cd /home/user/studio && nohup npm run dev > /tmp/opencode/dev.log 2>&1 &
