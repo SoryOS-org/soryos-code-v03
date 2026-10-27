@@ -4,6 +4,7 @@
 
 PORT="${PORT:-3000}"
 
-echo "Starting SoryOS-Code dev server on port $PORT..."
-cd /home/user/studio/apps/web
-exec npm run dev -- --port "$PORT" --hostname 0.0.0.0
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$DIR/apps/web"
+exec npm run dev -- -p "$PORT" -H 0.0.0.0
+

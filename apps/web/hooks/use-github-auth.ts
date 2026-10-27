@@ -300,15 +300,19 @@ export function useGitHubAuth(sessionId: string = "session") {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, repo: repoFullName, branch, machine }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (data.codespace) {
         setCodespaces((prev) => [data.codespace, ...prev]);
         return data.codespace;
       }
-      throw new Error(data.error || "Échec de création du Codespace");
+      throw new Error(data.error || `Échec de création du Codespace (HTTP ${res.status})`);
     } catch (e: unknown) {
-      setError((e as Error)?.message || "Échec de création du Codespace");
-      throw e;
+      let message = (e as Error)?.message || "Échec de création du Codespace";
+      if (message.includes("NetworkError") || message.includes("Failed to fetch")) {
+        message = "Connexion au serveur interrompue. Vérifiez votre réseau ou réessayez.";
+      }
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }

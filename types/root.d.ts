@@ -1,1 +1,3 @@
+declare module "uuid";
 export {};
+

@@ -13,6 +13,17 @@ class GitHubService {
     }
   }
 
+  getToken(): string {
+    return this.token;
+  }
+
+  setToken(token: string) {
+    this.token = token;
+    if (token && !this.userAccount.connected) {
+      this.verifyAndStoreToken("session", token).catch(() => {});
+    }
+  }
+
   getAccountState(sessionId: string) {
     return this.userAccount;
   }
@@ -43,9 +54,14 @@ class GitHubService {
         scopes,
       };
 
+      // Store in process.env so exec / gh-cli layer can immediately access it
+      process.env.GITHUB_TOKEN = token;
+      process.env.GH_TOKEN = token;
+
       // Store globally (no session scope) so every server module that resolves
       // "github-codespaces" (remote filesystem, codespace exec) finds the token.
       credentialManager.saveCredentials("github-codespaces", { apiKey: token });
+      void credentialManager.persist("github-codespaces", { apiKey: token }).catch(() => {});
 
       return this.userAccount;
     } catch (err: unknown) {
@@ -57,7 +73,10 @@ class GitHubService {
   disconnectAccount(sessionId: string) {
     this.token = "";
     this.userAccount = { connected: false };
+    delete process.env.GITHUB_TOKEN;
+    delete process.env.GH_TOKEN;
     credentialManager.deleteCredentials("github-codespaces");
+    void credentialManager.remove("github-codespaces").catch(() => {});
   }
 
   async listRepositories(sessionId: string) {
@@ -166,8 +185,12 @@ class GitHubService {
     };
   }
 
-  async createCodespace(sessionId: string, repo: string, branch: string, machine: string) {
+  async createCodespace(sessionId: string, repo: string, branch: string = "main", machine?: string) {
     if (!this.token) throw new Error("Non authentifié sur GitHub");
+    const payload: Record<string, string> = { ref: branch };
+    if (machine && machine.trim() && machine !== "standardLinux32gb") {
+      payload.machine = machine.trim();
+    }
     const res = await fetch(`https://api.github.com/repos/${repo}/codespaces`, {
       method: "POST",
       headers: {
@@ -177,11 +200,7 @@ class GitHubService {
         "User-Agent": "SoryOS-Code-IDE",
         "X-GitHub-Api-Version": "2022-11-28",
       },
-      body: JSON.stringify({
-        ref: branch,
-        machine: machine || "standardLinux32gb",
-        location: "WestEurope",
-      }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -199,10 +218,24 @@ class GitHubService {
   }
 }
 
-export function getGitHubService() {
-  if (instance) return instance;
+declare global {
+  // eslint-disable-next-line no-var
+  var __soryos_github_service: GitHubService | undefined;
+}
+
+export function getGitHubService(): GitHubService {
+  if (globalThis.__soryos_github_service) {
+    const existing = globalThis.__soryos_github_service;
+    if (!existing.getToken()) {
+      const config = credentialManager.getCredentials("github-codespaces");
+      const token = (config && config.apiKey) ? config.apiKey : (process.env.GITHUB_TOKEN || "");
+      if (token) existing.setToken(token);
+    }
+    return existing;
+  }
   const config = credentialManager.getCredentials("github-codespaces"); 
-  const token = (config && config.apiKey) ? config.apiKey : "";
-  instance = new GitHubService(token);
+  const token = (config && config.apiKey) ? config.apiKey : (process.env.GITHUB_TOKEN || "");
+  const instance = new GitHubService(token);
+  globalThis.__soryos_github_service = instance;
   return instance;
 }

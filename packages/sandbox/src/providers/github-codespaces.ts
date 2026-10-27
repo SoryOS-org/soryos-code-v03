@@ -132,6 +132,7 @@ export class GitHubCodespacesProvider implements SandboxProvider {
 
   async start(): Promise<void> {
     if (!this.codespaceName) throw new Error("No Codespace selected");
+    if (this.status === "ready" || this.status === "busy") return;
     const client = this.getGitHubClient();
     await client.startCodespace(this.codespaceName);
     this.status = "ready";

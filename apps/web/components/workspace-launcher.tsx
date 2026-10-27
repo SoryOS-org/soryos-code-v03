@@ -123,7 +123,7 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
       // Set session environment to local
       const response = await fetch(`/api/sessions/${session.id}`, {
         method: "PATCH",
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(120000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ environment: "local", providerId: "local" }),
       });
@@ -135,7 +135,11 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
         router.push(`/chat/${session.id}`);
       }
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : "Impossible d'ouvrir le dossier local. Vérifiez les permissions d'accès.");
+      let msg = error instanceof Error ? error.message : "Impossible d'ouvrir le dossier local. Vérifiez les permissions d'accès.";
+      if (msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
+        msg = "Erreur de connexion réseau : impossible de joindre le serveur. Vérifiez votre connexion ou réessayez.";
+      }
+      setErrorMessage(msg);
       setLoading(false);
     }
   };
@@ -169,9 +173,9 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
         }),
       });
 
-      const initData = await initRes.json();
+      const initData = await initRes.json().catch(() => ({}));
       if (!initRes.ok || initData.error) {
-        throw new Error(initData.error || "Impossible de connecter le Remote Filesystem du Codespace.");
+        throw new Error(initData.error || `Impossible de connecter le Remote Filesystem du Codespace (HTTP ${initRes.status}).`);
       }
 
       if (initData.syncError) throw new Error(`Synchronisation GitHub échouée : ${initData.syncError}`);
@@ -183,7 +187,10 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
         router.push(`/chat/${session.id}`);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Échec de connexion au Codespace.";
+      let msg = err instanceof Error ? err.message : "Échec de connexion au Codespace.";
+      if (msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
+        msg = "Connexion réseau interrompue lors de l'accès au serveur ou à GitHub. Vérifiez votre réseau ou réessayez.";
+      }
       setErrorMessage(msg);
       setLoading(false);
     }
@@ -222,9 +229,9 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
         }),
       });
 
-      const initData = await initRes.json();
+      const initData = await initRes.json().catch(() => ({}));
       if (!initRes.ok || initData.error) {
-        throw new Error(initData.error || "Échec d'initialisation du Remote Filesystem.");
+        throw new Error(initData.error || `Échec d'initialisation du Remote Filesystem (HTTP ${initRes.status}).`);
       }
 
       if (initData.syncError) throw new Error(`Synchronisation GitHub échouée : ${initData.syncError}`);
@@ -236,7 +243,10 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
         router.push(`/chat/${session.id}`);
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Échec de la création du GitHub Codespace.";
+      let msg = e instanceof Error ? e.message : "Échec de la création du GitHub Codespace.";
+      if (msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
+        msg = "Connexion réseau interrompue lors de la création du Codespace. Vérifiez votre réseau ou réessayez.";
+      }
       setErrorMessage(msg);
       setLoading(false);
     }
@@ -261,7 +271,7 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
 
       const response = await fetch(`/api/sessions/${session.id}`, {
         method: "PATCH",
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(120000),
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           environment: "sandbox",
@@ -277,7 +287,11 @@ export function WorkspaceLauncher({ onWorkspaceOpened }: WorkspaceLauncherProps)
         router.push(`/chat/${session.id}`);
       }
     } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : `Échec de lancement de l'environnement ${providerId}.`);
+      let msg = error instanceof Error ? error.message : `Échec de lancement de l'environnement ${providerId}.`;
+      if (msg.includes("NetworkError") || msg.includes("Failed to fetch")) {
+        msg = `Connexion au serveur interrompue lors du lancement de ${meta.name}. Vérifiez votre réseau ou réessayez.`;
+      }
+      setErrorMessage(msg);
       setLoading(false);
     }
   };

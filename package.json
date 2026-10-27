@@ -1,1 +1,27 @@
-{"name":"soryos-code","version":"1.0.0","private":true,"scripts":{"dev":"npx turbo dev","build":"npx turbo build","lint":"npx turbo lint","typecheck":"npx turbo typecheck","test:engine":"npx turbo test:engine","doctor":"npx ts-node scripts/doctor.ts","cli":"tsx packages/cli/src/index.ts","cli:interactive":"tsx packages/cli/src/index.ts interactive"},"devDependencies":{"react":"19.0.0","react-dom":"19.0.0","ts-node":"^10.9.2","tsx":"^4.23.15","turbo":"^2.2.3","typescript":"^5.6.3"},"workspaces":["apps/*","packages/*"]}
+{
+  "name": "soryos-code",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace=@soryos/web",
+    "build": "npm run build --workspace=@soryos/web",
+    "lint": "npm run lint --workspace=@soryos/web",
+    "typecheck": "npm run typecheck --workspace=@soryos/web",
+    "test:engine": "npx turbo test:engine",
+    "doctor": "npx ts-node scripts/doctor.ts",
+    "cli": "tsx packages/cli/src/index.ts",
+    "cli:interactive": "tsx packages/cli/src/index.ts interactive"
+  },
+  "devDependencies": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
+    "turbo": "^2.2.3",
+    "typescript": "^5.6.3"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
